@@ -2,21 +2,17 @@
 require_once 'config.php';
 session_start();
 
-// Inicializa o carrinho se não existir
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Parâmetros de paginação e filtros
 $categoria_id = isset($_GET['categoria']) ? (int)$_GET['categoria'] : 0;
 $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $itens_por_pagina = 12;
 $offset = ($pagina - 1) * $itens_por_pagina;
 
-// Busca todas as categorias para o filtro
 $categorias = $conn->query("SELECT * FROM categorias ORDER BY nome")->fetch_all(MYSQLI_ASSOC);
 
-// Prepara a query base
 $sql = "SELECT p.*, c.nome as categoria_nome 
         FROM produtos p 
         JOIN categorias c ON p.categoria_id = c.id 
@@ -24,14 +20,12 @@ $sql = "SELECT p.*, c.nome as categoria_nome
 $params = [];
 $types = "";
 
-// Adiciona filtro de categoria se especificado
 if ($categoria_id > 0) {
     $sql .= " AND p.categoria_id = ?";
     $params[] = $categoria_id;
     $types .= "i";
 }
 
-// Conta o total de produtos para paginação
 $count_sql = str_replace("p.*, c.nome as categoria_nome", "COUNT(*) as total", $sql);
 $stmt = $conn->prepare($count_sql);
 if (!empty($params)) {
@@ -41,13 +35,11 @@ $stmt->execute();
 $total_produtos = $stmt->get_result()->fetch_assoc()['total'];
 $total_paginas = ceil($total_produtos / $itens_por_pagina);
 
-// Adiciona ordenação e limite para paginação
 $sql .= " ORDER BY p.data_cadastro DESC LIMIT ? OFFSET ?";
 $params[] = $itens_por_pagina;
 $params[] = $offset;
 $types .= "ii";
 
-// Busca os produtos
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
@@ -59,7 +51,6 @@ while ($row = $result->fetch_assoc()) {
     $produtos[] = $row;
 }
 
-// Function to get product image
 function getProductImage($produto_id, $categoria_id) {
     $images = [
         1 => 'product-1.jpg', // Roupas

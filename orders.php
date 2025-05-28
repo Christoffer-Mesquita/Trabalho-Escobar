@@ -1,11 +1,8 @@
 <?php
-// Include authentication check
 require_once 'auth.php';
 
-// Include database configuration
 require_once 'config.php';
 
-// Get user orders
 $sql = "SELECT p.*, 
         (SELECT COUNT(*) FROM pedidos_itens WHERE pedido_id = p.id) as total_itens,
         (SELECT SUM(quantidade * preco_unitario) FROM pedidos_itens WHERE pedido_id = p.id) as valor_total

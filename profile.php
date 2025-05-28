@@ -1,8 +1,6 @@
 <?php
-// Include authentication check
 require_once 'auth.php';
 
-// Include database configuration
 require_once 'config.php';
 
 $error = '';
@@ -24,11 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nova_senha = $_POST['nova_senha'] ?? '';
     $confirmar_senha = $_POST['confirmar_senha'] ?? '';
 
-    // Validate required fields
     if (empty($nome) || empty($email)) {
         $error = 'Por favor, preencha todos os campos obrigatórios.';
     } else {
-        // Check if email is already used by another user
         $check_sql = "SELECT id FROM usuarios WHERE email = ? AND id != ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("si", $email, $_SESSION['user_id']);
@@ -38,12 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check_result->num_rows > 0) {
             $error = 'Este email já está em uso por outro usuário.';
         } else {
-            // Start building the update query
             $update_fields = array();
             $update_types = "";
             $update_params = array();
 
-            // Add basic fields
             $update_fields[] = "nome = ?";
             $update_fields[] = "email = ?";
             $update_fields[] = "telefone = ?";
@@ -57,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_types = "ssssssssss";
             $update_params = array($nome, $email, $telefone, $cep, $endereco, $numero, $complemento, $bairro, $cidade, $estado);
 
-            // Handle password change if requested
             if (!empty($senha_atual)) {
                 if (empty($nova_senha) || empty($confirmar_senha)) {
                     $error = 'Por favor, preencha todos os campos de senha.';
@@ -66,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif (strlen($nova_senha) < 6) {
                     $error = 'A nova senha deve ter pelo menos 6 caracteres.';
                 } else {
-                    // Verify current password
                     $verify_sql = "SELECT senha FROM usuarios WHERE id = ?";
                     $verify_stmt = $conn->prepare($verify_sql);
                     $verify_stmt->bind_param("i", $_SESSION['user_id']);
@@ -77,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!password_verify($senha_atual, $user['senha'])) {
                         $error = 'Senha atual incorreta.';
                     } else {
-                        // Add password to update
                         $senha_hash = password_hash($nova_senha, PASSWORD_DEFAULT);
                         $update_fields[] = "senha = ?";
                         $update_types .= "s";
@@ -87,18 +78,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (empty($error)) {
-                // Add user ID to parameters
                 $update_types .= "i";
                 $update_params[] = $_SESSION['user_id'];
 
-                // Build and execute update query
                 $sql = "UPDATE usuarios SET " . implode(", ", $update_fields) . " WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param($update_types, ...$update_params);
 
                 if ($stmt->execute()) {
                     $success = 'Perfil atualizado com sucesso!';
-                    // Update session data
                     $_SESSION['user_nome'] = $nome;
                     $_SESSION['user_email'] = $email;
                 } else {
@@ -109,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get current user data
 $sql = "SELECT * FROM usuarios WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $_SESSION['user_id']);

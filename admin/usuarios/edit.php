@@ -1,17 +1,13 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
 }
 
-// Check if user ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: index.php');
     exit();
@@ -20,7 +16,6 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $user_id = (int)$_GET['id'];
 $errors = [];
 
-// Get user data
 $stmt = $conn->prepare("SELECT * FROM usuarios WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -32,9 +27,7 @@ if (!$user) {
     exit();
 }
 
-// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
@@ -48,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cep = trim($_POST['cep'] ?? '');
     $is_admin = isset($_POST['is_admin']) ? 1 : 0;
 
-    // Validate required fields
     if (empty($nome)) {
         $errors[] = "O nome é obrigatório";
     }
@@ -82,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "O CEP é obrigatório";
     }
 
-    // Check if email already exists (excluding current user)
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
         $stmt->bind_param("si", $email, $user_id);
@@ -94,10 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // If no errors, update user
     if (empty($errors)) {
         if (!empty($senha)) {
-            // Update with new password
             $stmt = $conn->prepare("
                 UPDATE usuarios SET 
                     nome = ?, email = ?, senha = ?, telefone = ?, 
@@ -113,7 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $complemento, $bairro, $cidade, $estado, $cep, $is_admin, $user_id
             );
         } else {
-            // Update without changing password
             $stmt = $conn->prepare("
                 UPDATE usuarios SET 
                     nome = ?, email = ?, telefone = ?, 

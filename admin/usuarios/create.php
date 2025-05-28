@@ -1,11 +1,8 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
@@ -13,9 +10,7 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
 
 $errors = [];
 
-// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
@@ -29,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cep = trim($_POST['cep'] ?? '');
     $is_admin = isset($_POST['is_admin']) ? 1 : 0;
 
-    // Validate required fields
     if (empty($nome)) {
         $errors[] = "O nome é obrigatório";
     }
@@ -65,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "O CEP é obrigatório";
     }
 
-    // Check if email already exists
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
         $stmt->bind_param("s", $email);
@@ -77,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // If no errors, insert new user
     if (empty($errors)) {
         $stmt = $conn->prepare("
             INSERT INTO usuarios (

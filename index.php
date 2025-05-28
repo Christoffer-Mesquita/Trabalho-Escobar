@@ -1,11 +1,8 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Initialize session
 session_start();
 
-// Function to get featured products
 function getFeaturedProducts($conn) {
     $sql = "SELECT p.*, c.nome as categoria_nome 
             FROM produtos p 
@@ -15,7 +12,6 @@ function getFeaturedProducts($conn) {
     return $result;
 }
 
-// Function to get latest products
 function getLatestProducts($conn) {
     $sql = "SELECT p.*, c.nome as categoria_nome 
             FROM produtos p 
@@ -26,14 +22,12 @@ function getLatestProducts($conn) {
     return $result;
 }
 
-// Function to get all categories
 function getCategories($conn) {
     $sql = "SELECT * FROM categorias ORDER BY nome";
     $result = $conn->query($sql);
     return $result;
 }
 
-// Get products and categories
 $featuredProducts = getFeaturedProducts($conn);
 $latestProducts = getLatestProducts($conn);
 $categories = getCategories($conn);

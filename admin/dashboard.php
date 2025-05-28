@@ -1,40 +1,30 @@
 <?php
-// Include database configuration
 require_once '../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: login.php');
     exit();
 }
 
-// Buscar estatísticas
 $stats = array();
 
-// Total de pedidos
 $result = $conn->query("SELECT COUNT(*) as total FROM pedidos");
 $stats['total_pedidos'] = $result->fetch_assoc()['total'];
 
-// Total de pedidos pendentes
 $result = $conn->query("SELECT COUNT(*) as total FROM pedidos WHERE status = 'pendente'");
 $stats['pedidos_pendentes'] = $result->fetch_assoc()['total'];
 
-// Total de produtos
 $result = $conn->query("SELECT COUNT(*) as total FROM produtos");
 $stats['total_produtos'] = $result->fetch_assoc()['total'];
 
-// Total de usuários
 $result = $conn->query("SELECT COUNT(*) as total FROM usuarios");
 $stats['total_usuarios'] = $result->fetch_assoc()['total'];
 
-// Total de vendas (soma dos valores dos pedidos)
 $result = $conn->query("SELECT COALESCE(SUM(valor_total), 0) as total FROM pedidos WHERE status != 'cancelado'");
 $stats['total_vendas'] = number_format($result->fetch_assoc()['total'], 2, ',', '.');
 
-// Pedidos recentes
 $pedidos_recentes = $conn->query("
     SELECT p.*, u.nome as nome_usuario 
     FROM pedidos p 
@@ -43,7 +33,6 @@ $pedidos_recentes = $conn->query("
     LIMIT 5
 ")->fetch_all(MYSQLI_ASSOC);
 
-// Produtos mais vendidos
 $produtos_mais_vendidos = $conn->query("
     SELECT p.nome, p.preco, SUM(ip.quantidade) as total_vendido
     FROM itens_pedido ip
@@ -55,7 +44,6 @@ $produtos_mais_vendidos = $conn->query("
     LIMIT 5
 ")->fetch_all(MYSQLI_ASSOC);
 
-// Vendas por mês (últimos 6 meses)
 $vendas_por_mes = $conn->query("
     SELECT 
         DATE_FORMAT(data_pedido, '%Y-%m') as mes,
@@ -68,7 +56,6 @@ $vendas_por_mes = $conn->query("
     ORDER BY mes ASC
 ")->fetch_all(MYSQLI_ASSOC);
 
-// Preparar dados para o gráfico
 $meses = array();
 $valores = array();
 foreach ($vendas_por_mes as $venda) {

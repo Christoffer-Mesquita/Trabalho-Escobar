@@ -1,17 +1,13 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
 }
 
-// Process product actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
@@ -28,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->bind_param("ssdii", $nome, $descricao, $preco, $estoque, $categoria_id);
                     $stmt->execute();
 
-                    // Handle image upload
                     if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
                         $produto_id = $conn->insert_id;
                         $ext = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
@@ -59,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->bind_param("ssdiii", $nome, $descricao, $preco, $estoque, $categoria_id, $id);
                     $stmt->execute();
 
-                    // Handle image upload
                     if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
                         $ext = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
                         $filename = "produto-{$id}.{$ext}";
@@ -78,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'delete':
                 $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
                 if ($id) {
-                    // Check if product has orders
                     $check_sql = "SELECT COUNT(*) as total FROM pedidos_itens WHERE produto_id = ?";
                     $check_stmt = $conn->prepare($check_sql);
                     $check_stmt->bind_param("i", $id);
@@ -87,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $count = $result->fetch_assoc()['total'];
 
                     if ($count == 0) {
-                        // Delete product image if exists
                         $sql = "SELECT imagem FROM produtos WHERE id = ?";
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("i", $id);
@@ -102,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
 
-                        // Delete product
                         $sql = "DELETE FROM produtos WHERE id = ?";
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("i", $id);
@@ -114,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all products with category names
 $sql = "SELECT p.*, c.nome as categoria_nome, 
         (SELECT COUNT(*) FROM pedidos_itens WHERE produto_id = p.id) as total_pedidos 
         FROM produtos p 
@@ -122,7 +112,6 @@ $sql = "SELECT p.*, c.nome as categoria_nome,
         ORDER BY p.nome";
 $products = $conn->query($sql);
 
-// Get all categories for the form
 $sql = "SELECT * FROM categorias ORDER BY nome";
 $categories = $conn->query($sql);
 ?>

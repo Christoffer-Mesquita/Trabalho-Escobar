@@ -2,7 +2,6 @@
 require_once 'config.php';
 session_start();
 
-// Verifica se há um pedido de sucesso
 if (!isset($_SESSION['pedido_sucesso'])) {
     header('Location: index.php');
     exit;
@@ -10,7 +9,6 @@ if (!isset($_SESSION['pedido_sucesso'])) {
 
 $pedido_id = $_SESSION['pedido_sucesso'];
 
-// Busca informações do pedido
 $stmt = $conn->prepare("
     SELECT p.*, u.nome as usuario_nome, u.email as usuario_email 
     FROM pedidos p 
@@ -26,7 +24,6 @@ if (!$pedido) {
     exit;
 }
 
-// Busca os itens do pedido
 $stmt = $conn->prepare("
     SELECT pi.*, pr.nome as produto_nome 
     FROM pedidos_itens pi 
@@ -37,7 +34,6 @@ $stmt->bind_param("i", $pedido_id);
 $stmt->execute();
 $itens = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Limpa a sessão de pedido sucesso
 unset($_SESSION['pedido_sucesso']);
 ?>
 

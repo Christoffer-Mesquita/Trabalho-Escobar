@@ -1,40 +1,31 @@
 <?php
-// Include database configuration
 require_once '../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: login.php');
     exit();
 }
 
-// Get statistics
 $stats = array();
 
-// Total products
 $sql = "SELECT COUNT(*) as total FROM produtos";
 $result = $conn->query($sql);
 $stats['total_produtos'] = $result->fetch_assoc()['total'];
 
-// Total categories
 $sql = "SELECT COUNT(*) as total FROM categorias";
 $result = $conn->query($sql);
 $stats['total_categorias'] = $result->fetch_assoc()['total'];
 
-// Total users
 $sql = "SELECT COUNT(*) as total FROM usuarios";
 $result = $conn->query($sql);
 $stats['total_usuarios'] = $result->fetch_assoc()['total'];
 
-// Total orders
 $sql = "SELECT COUNT(*) as total FROM pedidos";
 $result = $conn->query($sql);
 $stats['total_pedidos'] = $result->fetch_assoc()['total'];
 
-// Recent orders
 $sql = "SELECT p.*, u.nome as cliente_nome 
         FROM pedidos p 
         JOIN usuarios u ON p.usuario_id = u.id 
@@ -42,7 +33,6 @@ $sql = "SELECT p.*, u.nome as cliente_nome
         LIMIT 5";
 $recent_orders = $conn->query($sql);
 
-// Low stock products
 $sql = "SELECT * FROM produtos WHERE estoque <= 5 ORDER BY estoque ASC LIMIT 5";
 $low_stock = $conn->query($sql);
 ?>

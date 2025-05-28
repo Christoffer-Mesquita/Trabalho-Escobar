@@ -1,24 +1,19 @@
 <?php
-// Include database configuration
 require_once '../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is already logged in
 if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
     header('Location: dashboard.php');
     exit();
 }
 
-// Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $senha = $_POST['senha'];
 
     $erro = null;
 
-    // Validações
     if (empty($email)) {
         $erro = "Email é obrigatório";
     } elseif (empty($senha)) {
@@ -26,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$erro) {
-        // Verifica se o usuário existe e é admin
         $stmt = $conn->prepare("SELECT id, nome, senha FROM usuarios WHERE email = ? AND is_admin = 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -34,10 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
-            
-            // Verifica a senha
             if (password_verify($senha, $user['senha'])) {
-                // Login bem sucedido
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['nome'];
                 $_SESSION['is_admin'] = true;

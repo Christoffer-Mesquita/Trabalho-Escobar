@@ -1,17 +1,13 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
 }
 
-// Process order actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
     
@@ -28,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 break;
 
             case 'delete':
-                // Check if order can be deleted (only pending orders)
                 $check_sql = "SELECT status FROM pedidos WHERE id = ?";
                 $check_stmt = $conn->prepare($check_sql);
                 $check_stmt->bind_param("i", $order_id);
@@ -37,13 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $order = $result->fetch_assoc();
 
                 if ($order && $order['status'] === 'pendente') {
-                    // Delete order items first
                     $sql = "DELETE FROM pedidos_itens WHERE pedido_id = ?";
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param("i", $order_id);
                     $stmt->execute();
 
-                    // Then delete the order
                     $sql = "DELETE FROM pedidos WHERE id = ?";
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param("i", $order_id);
@@ -54,12 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Get filter parameters
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 $date_start = isset($_GET['date_start']) ? $_GET['date_start'] : '';
 $date_end = isset($_GET['date_end']) ? $_GET['date_end'] : '';
 
-// Build query
 $sql = "SELECT p.*, u.nome as cliente_nome, u.email as cliente_email,
         (SELECT COUNT(*) FROM pedidos_itens WHERE pedido_id = p.id) as total_itens
         FROM pedidos p 
@@ -88,7 +79,6 @@ if ($date_end) {
 
 $sql .= " ORDER BY p.data_pedido DESC";
 
-// Prepare and execute query
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
@@ -96,20 +86,16 @@ if (!empty($params)) {
 $stmt->execute();
 $orders = $stmt->get_result();
 
-// Get order statistics
 $stats = array();
 
-// Total orders
 $sql = "SELECT COUNT(*) as total FROM pedidos";
 $result = $conn->query($sql);
 $stats['total_pedidos'] = $result->fetch_assoc()['total'];
 
-// Total revenue
 $sql = "SELECT SUM(total) as total FROM pedidos WHERE status != 'cancelado'";
 $result = $conn->query($sql);
 $stats['total_vendas'] = $result->fetch_assoc()['total'] ?? 0;
 
-// Orders by status
 $sql = "SELECT status, COUNT(*) as total FROM pedidos GROUP BY status";
 $result = $conn->query($sql);
 $stats['por_status'] = array();

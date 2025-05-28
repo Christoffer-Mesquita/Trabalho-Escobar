@@ -1,11 +1,8 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is already logged in
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit();
@@ -14,7 +11,6 @@ if (isset($_SESSION['user_id'])) {
 $error = '';
 $success = '';
 
-// Process registration form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_STRING);
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
@@ -29,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cidade = filter_input(INPUT_POST, 'cidade', FILTER_SANITIZE_STRING);
     $estado = filter_input(INPUT_POST, 'estado', FILTER_SANITIZE_STRING);
 
-    // Validate required fields
     if (empty($nome) || empty($email) || empty($senha) || empty($confirmar_senha)) {
         $error = 'Por favor, preencha todos os campos obrigatórios.';
     } elseif ($senha !== $confirmar_senha) {
@@ -37,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($senha) < 6) {
         $error = 'A senha deve ter pelo menos 6 caracteres.';
     } else {
-        // Check if email already exists
         $check_sql = "SELECT id FROM usuarios WHERE email = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("s", $email);
@@ -47,10 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check_result->num_rows > 0) {
             $error = 'Este email já está cadastrado.';
         } else {
-            // Hash password
             $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-            // Insert new user
             $sql = "INSERT INTO usuarios (nome, email, senha, telefone, cep, endereco, numero, complemento, bairro, cidade, estado) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);

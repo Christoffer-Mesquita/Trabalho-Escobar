@@ -1,11 +1,8 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is already logged in
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit();
@@ -13,7 +10,6 @@ if (isset($_SESSION['user_id'])) {
 
 $error = '';
 
-// Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $senha = $_POST['senha'];
@@ -30,19 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
             if (password_verify($senha, $user['senha'])) {
-                // Login successful
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_nome'] = $user['nome'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['is_admin'] = $user['is_admin'];
 
-                // Update last login
                 $update_sql = "UPDATE usuarios SET ultimo_login = CURRENT_TIMESTAMP WHERE id = ?";
                 $update_stmt = $conn->prepare($update_sql);
                 $update_stmt->bind_param("i", $user['id']);
                 $update_stmt->execute();
 
-                // Redirect based on stored URL or user type
                 if (isset($_SESSION['redirect_after_login'])) {
                     $redirect = $_SESSION['redirect_after_login'];
                     unset($_SESSION['redirect_after_login']);

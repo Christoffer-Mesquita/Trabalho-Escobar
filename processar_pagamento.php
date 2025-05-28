@@ -2,35 +2,29 @@
 require_once 'config.php';
 session_start();
 
-// Verifica se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-// Verifica se há itens no carrinho
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header('Location: cart.php');
     exit;
 }
 
-// Verifica se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: checkout.php');
     exit;
 }
 
 try {
-    // Inicia a transação
     $conn->begin_transaction();
 
-    // Simula processamento do pagamento (aceita qualquer cartão)
     $numero_cartao = preg_replace('/\D/', '', $_POST['numero_cartao']);
     $validade = $_POST['validade'];
     $cvv = $_POST['cvv'];
     $nome_cartao = $_POST['nome_cartao'];
 
-    // Validações básicas
     if (strlen($numero_cartao) < 13 || strlen($numero_cartao) > 19) {
         throw new Exception('Número do cartão inválido');
     }
@@ -43,7 +37,6 @@ try {
         throw new Exception('CVV inválido');
     }
 
-    // Monta o endereço de entrega
     $endereco_entrega = sprintf(
         "%s, %s%s - %s, %s/%s - CEP: %s",
         $_POST['endereco'],
@@ -55,7 +48,6 @@ try {
         $_POST['cep']
     );
 
-    // Cria o pedido
     $stmt = $conn->prepare("
         INSERT INTO pedidos (
             usuario_id, 
@@ -76,9 +68,7 @@ try {
     $stmt->execute();
     $pedido_id = $conn->insert_id;
 
-    // Insere os itens do pedido e atualiza o estoque
     foreach ($_SESSION['cart'] as $produto_id => $quantidade) {
-        // Busca informações do produto
         $stmt = $conn->prepare("SELECT * FROM produtos WHERE id = ? AND ativo = TRUE FOR UPDATE");
         $stmt->bind_param("i", $produto_id);
         $stmt->execute();
@@ -92,7 +82,6 @@ try {
             throw new Exception("Estoque insuficiente para o produto: {$produto['nome']}");
         }
 
-        // Insere o item no pedido
         $stmt = $conn->prepare("
             INSERT INTO pedidos_itens (
                 pedido_id, 
@@ -111,7 +100,6 @@ try {
         
         $stmt->execute();
 
-        // Atualiza o estoque
         $stmt = $conn->prepare("
             UPDATE produtos 
             SET estoque = estoque - ? 
@@ -122,19 +110,15 @@ try {
         $stmt->execute();
     }
 
-    // Confirma a transação
     $conn->commit();
 
-    // Limpa o carrinho
     unset($_SESSION['cart']);
 
-    // Redireciona para página de sucesso
     $_SESSION['pedido_sucesso'] = $pedido_id;
     header('Location: pedido_sucesso.php');
     exit;
 
 } catch (Exception $e) {
-    // Em caso de erro, desfaz a transação
     $conn->rollback();
     $_SESSION['erro_checkout'] = $e->getMessage();
     header('Location: checkout.php');

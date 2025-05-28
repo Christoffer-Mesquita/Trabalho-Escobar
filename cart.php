@@ -1,14 +1,11 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Initialize cart session if not exists
 session_start();
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Handle cart actions
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
     $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -46,12 +43,10 @@ if (isset($_GET['action'])) {
             break;
     }
 
-    // Redirect to remove GET parameters
     header('Location: cart.php');
     exit();
 }
 
-// Get cart products
 $cart_products = [];
 $total = 0;
 
@@ -85,7 +80,6 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
-// Function to get product image based on category
 function getProductImage($categoria_id) {
     $images = [
         1 => 'product-1.jpg', // Roupas

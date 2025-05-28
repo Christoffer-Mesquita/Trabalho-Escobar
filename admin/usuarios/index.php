@@ -1,25 +1,19 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
 }
 
-// Process delete action
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
     $user_id = (int)$_GET['id'];
 
-    // Não permitir que o usuário exclua a si mesmo
     if ($user_id === $_SESSION['user_id']) {
         $_SESSION['error'] = "Você não pode excluir seu próprio usuário";
     } else {
-        // Verificar se o usuário tem pedidos
         $stmt = $conn->prepare("SELECT COUNT(*) as total FROM pedidos WHERE usuario_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -29,7 +23,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
         if ($row['total'] > 0) {
             $_SESSION['error'] = "Não é possível excluir um usuário que possui pedidos";
         } else {
-            // Excluir o usuário
             $stmt = $conn->prepare("DELETE FROM usuarios WHERE id = ?");
             $stmt->bind_param("i", $user_id);
 
@@ -45,7 +38,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     exit();
 }
 
-// Buscar todos os usuários com contagem de pedidos e valor total
 $users = $conn->query("
     SELECT 
         u.*,

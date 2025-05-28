@@ -1,17 +1,13 @@
 <?php
-// Include database configuration
 require_once '../../config.php';
 
-// Initialize session
 session_start();
 
-// Check if user is logged in and is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header('Location: ../login.php');
     exit();
 }
 
-// Process category actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
@@ -39,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'delete':
                 $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
                 if ($id) {
-                    // Check if category has products
                     $check_sql = "SELECT COUNT(*) as total FROM produtos WHERE categoria_id = ?";
                     $check_stmt = $conn->prepare($check_sql);
                     $check_stmt->bind_param("i", $id);
@@ -59,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all categories
 $sql = "SELECT c.*, COUNT(p.id) as total_produtos 
         FROM categorias c 
         LEFT JOIN produtos p ON c.id = p.categoria_id 

@@ -1,8 +1,6 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Function to get product image based on category
 function getProductImage($categoria_id) {
     $images = [
         1 => 'product-1.jpg', // Roupas
@@ -12,10 +10,8 @@ function getProductImage($categoria_id) {
     return isset($images[$categoria_id]) ? $images[$categoria_id] : 'product-1.jpg';
 }
 
-// Get product ID from URL
 $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Get product details
 $sql = "SELECT p.*, c.nome as categoria_nome 
         FROM produtos p 
         JOIN categorias c ON p.categoria_id = c.id 
@@ -27,13 +23,11 @@ $stmt->execute();
 $result = $stmt->get_result();
 $product = $result->fetch_assoc();
 
-// If product not found, redirect to home
 if (!$product) {
     header("Location: index.php");
     exit();
 }
 
-// Get related products (same category, excluding current product)
 $sql_related = "SELECT p.*, c.nome as categoria_nome 
                 FROM produtos p 
                 JOIN categorias c ON p.categoria_id = c.id 

@@ -1,15 +1,12 @@
 <?php
-// Include database configuration
 require_once 'config.php';
 
-// Initialize cart session if not exists
 session_start();
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header('Location: cart.php');
     exit();
 }
 
-// Get cart products
 $cart_products = [];
 $total = 0;
 
@@ -43,11 +40,9 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
-// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $erro = null;
     
-    // Validações básicas do cartão
     $numero_cartao = preg_replace('/\D/', '', $_POST['numero_cartao']);
     $validade = $_POST['validade'];
     $cvv = $_POST['cvv'];
@@ -64,10 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!$erro) {
-        // Simula processamento do pagamento
-        // Em um sistema real, aqui seria feita a integração com a operadora de cartão
-        
-        // Monta o endereço de entrega
         $endereco_entrega = sprintf(
             "%s, %s%s - %s, %s/%s - CEP: %s",
             $_POST['endereco'],
@@ -80,10 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         
         try {
-            // Inicia a transação
             $conn->begin_transaction();
             
-            // Cria o pedido
             $stmt = $conn->prepare("
                 INSERT INTO pedidos (
                     usuario_id, 
@@ -104,9 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $pedido_id = $conn->insert_id;
             
-            // Insere os itens do pedido e atualiza o estoque
             foreach ($cart_products as $item) {
-                // Verifica estoque
                 $stmt = $conn->prepare("SELECT estoque FROM produtos WHERE id = ? FOR UPDATE");
                 $stmt->bind_param("i", $item['id']);
                 $stmt->execute();
@@ -116,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Estoque insuficiente para o produto: {$item['nome']}");
                 }
                 
-                // Insere item do pedido
                 $stmt = $conn->prepare("
                     INSERT INTO pedidos_itens (
                         pedido_id, 
@@ -135,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $stmt->execute();
                 
-                // Atualiza estoque
                 $stmt = $conn->prepare("
                     UPDATE produtos 
                     SET estoque = estoque - ? 
@@ -146,26 +131,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute();
             }
             
-            // Confirma a transação
             $conn->commit();
             
-            // Limpa o carrinho
             $_SESSION['cart'] = [];
             
-            // Redireciona para página de sucesso
             $_SESSION['pedido_sucesso'] = $pedido_id;
             header('Location: pedido_sucesso.php');
             exit;
             
         } catch (Exception $e) {
-            // Em caso de erro, desfaz a transação
             $conn->rollback();
             $erro = $e->getMessage();
         }
     }
 }
 
-// Function to get product image based on category
 function getProductImage($categoria_id) {
     $images = [
         1 => 'product-1.jpg', // Roupas
@@ -175,25 +155,21 @@ function getProductImage($categoria_id) {
     return isset($images[$categoria_id]) ? $images[$categoria_id] : 'product-1.jpg';
 }
 
-// Verifica se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-// Verifica se há itens no carrinho
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header('Location: cart.php');
     exit;
 }
 
-// Busca informações do usuário
 $stmt = $conn->prepare("SELECT * FROM usuarios WHERE id = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $usuario = $stmt->get_result()->fetch_assoc();
 
-// Calcula o total do pedido
 $total = 0;
 $itens = [];
 
@@ -221,7 +197,6 @@ foreach ($_SESSION['cart'] as $produto_id => $quantidade) {
     }
 }
 
-// Exibe mensagem de erro se houver
 $erro_checkout = isset($_SESSION['erro_checkout']) ? $_SESSION['erro_checkout'] : '';
 unset($_SESSION['erro_checkout']);
 ?>
